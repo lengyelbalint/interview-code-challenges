@@ -32,3 +32,35 @@ Extend the existing API to add the following functionality:
 
 ## Project Structure
 
+Run
+cd PHP/library-api-php
+php -S 127.0.0.1:8000 router.php
+
+Run tests
+php tests/run.php
+
+Manual API checks (curl)
+
+Books – list
+curl.exe -i http://127.0.0.1:8000/books
+
+Loans – active loans
+curl.exe -i http://127.0.0.1:8000/loans
+
+Loans – return a book
+curl.exe -i -X POST http://127.0.0.1:8000/loans/return ^
+  -H "Content-Type: application/json" ^
+  -d "{\"bookStockId\":1,\"returnedAt\":\"2025-04-10\"}"
+
+Loans – return a book (late, fine expected)
+curl.exe -i -X POST http://127.0.0.1:8000/loans/return ^
+  -H "Content-Type: application/json" ^
+  -d "{\"bookStockId\":1,\"returnedAt\":\"2025-04-12\"}"
+
+Reservations – create a reservation
+curl.exe -i -X POST http://127.0.0.1:8000/reservations ^
+  -H "Content-Type: application/json" ^
+  -d "{\"bookId\":1,\"borrowerId\":2}"
+
+Reservations – reservation status
+curl.exe -i "http://127.0.0.1:8000/reservations?bookId=1&borrowerId=2"
