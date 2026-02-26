@@ -1,21 +1,40 @@
 <?php
 
-require_once __DIR__ . '/../data/data.php';
-require_once __DIR__ . '/../models/BookStock.php';
-require_once __DIR__ . '/../models/Fine.php';
+require_once __DIR__ . '/../lib/Http/JsonResponse.php';
+require_once __DIR__ . '/../lib/Http/Request.php';
+require_once __DIR__ . '/../services/LoanService.php';
+require_once __DIR__ . '/../lib/ApiException.php';
 
-class LoanController {
-    // GET /loans
-    public function index() {
-        // TODO: Implement logic to list active loans with borrower and book details.
-        header('Content-Type: application/json');
-        echo json_encode(['message' => 'List active loans functionality to be implemented.']);
+final class LoanController
+{
+    public function __construct(
+        private LoanService $service,
+        private Request $request
+    ) {
     }
-    
-    // POST /loans/return
-    public function returnBook() {
-        // TODO: Implement logic to process the return of a book and calculate fines if overdue.
-        header('Content-Type: application/json');
-        echo json_encode(['message' => 'Return book functionality to be implemented.']);
+
+    public function index(): void
+    {
+        try {
+            JsonResponse::ok($this->service->listActiveLoans());
+        } catch (\Throwable $e) {
+            JsonResponse::error('Unexpected error', 500);
+        }
+    }
+
+    public function returnBook(): void
+    {
+        try {
+            $payload = $this->request->json();
+            $bookStockId = (int) ($payload['bookStockId'] ?? 0);
+            $returnedAt = (string) ($payload['returnedAt'] ?? date('Y-m-d'));
+
+            $result = $this->service->returnBook($bookStockId, $returnedAt);
+            JsonResponse::ok($result);
+        } catch (ApiException $e) {
+            JsonResponse::error($e->getMessage(), $e->status, $e->errorCode, $e->meta);
+        } catch (\Throwable $e) {
+            JsonResponse::error('Unexpected error', 500);
+        }
     }
 }

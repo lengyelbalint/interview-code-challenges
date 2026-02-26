@@ -1,29 +1,70 @@
 <?php
 
-require 'data/data.php';
-require 'controllers/BookController.php';
-require 'controllers/LoanController.php';
-require 'controllers/ReservationController.php';
+require_once __DIR__ . '/data/data.php';
 
-$uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
-$method = $_SERVER['REQUEST_METHOD'];
+require_once __DIR__ . '/lib/ApiException.php';
+require_once __DIR__ . '/lib/LibraryStore.php';
+require_once __DIR__ . '/lib/Http/Request.php';
+require_once __DIR__ . '/lib/Http/JsonResponse.php';
+
+require_once __DIR__ . '/repositories/BookRepository.php';
+require_once __DIR__ . '/repositories/BorrowerRepository.php';
+require_once __DIR__ . '/repositories/BookStockRepository.php';
+require_once __DIR__ . '/repositories/FineRepository.php';
+require_once __DIR__ . '/repositories/ReservationRepository.php';
+
+require_once __DIR__ . '/services/FineCalculator.php';
+require_once __DIR__ . '/services/LoanService.php';
+require_once __DIR__ . '/services/BookService.php';
+require_once __DIR__ . '/services/ReservationService.php';
+
+require_once __DIR__ . '/controllers/LoanController.php';
+require_once __DIR__ . '/controllers/BookController.php';
+require_once __DIR__ . '/controllers/ReservationController.php';
+
+$request = new Request();
+$store = library_store();
+
+$bookRepo = new BookRepository($store);
+$borrowerRepo = new BorrowerRepository($store);
+$bookStockRepo = new BookStockRepository($store);
+$fineRepo = new FineRepository($store);
+$reservationRepo = new ReservationRepository($store);
+
+$loanService = new LoanService(
+    $bookStockRepo,
+    $borrowerRepo,
+    $bookRepo,
+    $fineRepo,
+    new FineCalculator(1.00)
+);
+
+$bookService = new BookService($bookRepo);
+
+$reservationService = new ReservationService(
+    $bookRepo,
+    $borrowerRepo,
+    $bookStockRepo,
+    $reservationRepo
+);
+
+$loanController = new LoanController($loanService, $request);
+$bookController = new BookController($bookService);
+$reservationController = new ReservationController($reservationService, $request);
+
+$uri = $request->path();
+$method = $request->method();
 
 if ($uri === '/books' && $method === 'GET') {
-    $controller = new BookController();
-    $controller->index();
+    $bookController->index();
 } elseif ($uri === '/loans' && $method === 'GET') {
-    $controller = new LoanController();
-    $controller->index();
+    $loanController->index();
 } elseif ($uri === '/loans/return' && $method === 'POST') {
-    $controller = new LoanController();
-    $controller->returnBook();
+    $loanController->returnBook();
 } elseif ($uri === '/reservations' && $method === 'POST') {
-    $controller = new ReservationController();
-    $controller->reserve();
+    $reservationController->reserve();
 } elseif ($uri === '/reservations' && $method === 'GET') {
-    $controller = new ReservationController();
-    $controller->status();
+    $reservationController->status();
 } else {
-    http_response_code(404);
-    echo json_encode(['error' => 'Endpoint not found']);
+    JsonResponse::error('Endpoint not found', 404);
 }

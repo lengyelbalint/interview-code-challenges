@@ -1,13 +1,15 @@
 <?php
 
-class BookStock {
+class BookStock
+{
     public $id;
     public $bookId;
     public $isOnLoan;
-    public $loanEndDate;  // Date string in 'Y-m-d' format or null
-    public $borrowerId;   // null if not on loan
+    public $loanEndDate;
+    public $borrowerId;
 
-    public function __construct($id, $bookId, $isOnLoan = false, $loanEndDate = null, $borrowerId = null) {
+    public function __construct($id, $bookId, $isOnLoan = false, $loanEndDate = null, $borrowerId = null)
+    {
         $this->id = $id;
         $this->bookId = $bookId;
         $this->isOnLoan = $isOnLoan;

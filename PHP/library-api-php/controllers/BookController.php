@@ -1,12 +1,21 @@
 <?php
 
-require_once __DIR__ . '/../models/Book.php';
-require_once __DIR__ . '/../data/data.php';
+require_once __DIR__ . '/../lib/Http/JsonResponse.php';
+require_once __DIR__ . '/../lib/ApiException.php';
+require_once __DIR__ . '/../services/BookService.php';
 
-class BookController {
-    public function index() {
-        // Returns a list of books
-        header('Content-Type: application/json');
-        echo json_encode($books);
+final class BookController
+{
+    public function __construct(private BookService $service)
+    {
+    }
+
+    public function index(): void
+    {
+        try {
+            JsonResponse::ok($this->service->listBooks());
+        } catch (\Throwable $e) {
+            JsonResponse::error('Unexpected error', 500);
+        }
     }
 }

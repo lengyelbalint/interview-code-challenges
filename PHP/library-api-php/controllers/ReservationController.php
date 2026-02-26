@@ -1,20 +1,46 @@
 <?php
 
-require_once __DIR__ . '/../data/data.php';
-require_once __DIR__ . '/../models/Reservation.php';
+require_once __DIR__ . '/../lib/Http/JsonResponse.php';
+require_once __DIR__ . '/../lib/Http/Request.php';
+require_once __DIR__ . '/../lib/ApiException.php';
+require_once __DIR__ . '/../services/ReservationService.php';
 
-class ReservationController {
-    // POST /reservations
-    public function reserve() {
-        // TODO: Implement logic to reserve a book currently on loan.
-        header('Content-Type: application/json');
-        echo json_encode(['message' => 'Reserve book functionality to be implemented.']);
+final class ReservationController
+{
+    public function __construct(
+        private ReservationService $service,
+        private Request $request
+    ) {
     }
-    
-    // GET /reservations
-    public function status() {
-        // TODO: Implement logic to return reservation status for a given borrower and book.
-        header('Content-Type: application/json');
-        echo json_encode(['message' => 'Reservation status functionality to be implemented.']);
+
+    public function reserve(): void
+    {
+        try {
+            $payload = $this->request->json();
+            $bookId = (int) ($payload['bookId'] ?? 0);
+            $borrowerId = (int) ($payload['borrowerId'] ?? 0);
+
+            $reservation = $this->service->reserve($bookId, $borrowerId);
+            JsonResponse::ok(['message' => 'Reservation created', 'reservation' => $reservation], 201);
+        } catch (ApiException $e) {
+            JsonResponse::error($e->getMessage(), $e->status, $e->errorCode, $e->meta);
+        } catch (\Throwable $e) {
+            JsonResponse::error('Unexpected error', 500);
+        }
+    }
+
+    public function status(): void
+    {
+        try {
+            $bookId = $this->request->queryInt('bookId', 0);
+            $borrowerId = $this->request->queryInt('borrowerId', 0);
+
+            $data = $this->service->status($bookId, $borrowerId);
+            JsonResponse::ok($data);
+        } catch (ApiException $e) {
+            JsonResponse::error($e->getMessage(), $e->status, $e->errorCode, $e->meta);
+        } catch (\Throwable $e) {
+            JsonResponse::error('Unexpected error', 500);
+        }
     }
 }
